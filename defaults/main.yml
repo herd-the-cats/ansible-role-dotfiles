@@ -1,0 +1,18 @@
+---
+# defaults file for dotfiles
+
+dotf_packages:
+- stow
+
+dotf_git_repo:
+  path: "{{ ansible_env.HOME }}/.dotfiles"
+  url: ""
+  version: "master"
+  key: "{{ ansible_env.HOME }}/.ssh/.ansible_dotfiles_key"
+# Vault me
+  key_vault: ""
+
+# List of folders in dotfiles repo to pass to stow script
+dotf_stow_list: []
+
+dotf_root_too: true
