@@ -108,8 +108,8 @@
     become: true
 
 - name: "Dotfiles main || Create templated stow script"
-  template:
-    src: "usr/bin/stow_wrapper.sh.j2"
+  copy:
+    src: "usr/bin/stow_wrapper.sh"
     dest: "/usr/bin/stow_wrapper.sh"
     owner: "root"
     group: "root"
