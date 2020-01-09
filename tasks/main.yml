@@ -14,6 +14,13 @@
       msg: "The dotf_git_repo.key_vault var is undefined or empty."
     when: dotf_git_repo.key_vault is undefined or dotf_git_repo.key_vault | string | length < 1
 
+  - name: "Dotfiles main || Check for root running role."
+    fail:
+      msg: >
+        This role is intended to be run as a regular user, with the var dotf_root_too setting up
+        root's dotfiles using become. To run this as root, please set dotf_root_too to false.
+    when: ansible_env.UID == 0 and dotf_root_too
+
   - name: "Dotfiles main || Make sure .ssh directory exists"
     file:
       path: "{{ ansible_env.HOME }}/.ssh"
