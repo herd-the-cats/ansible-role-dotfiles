@@ -49,11 +49,11 @@
     no_log: true
     ignore_errors: "{{ ansible_check_mode }}"
     register: reg_repo_key_copy1
-    changed_when: reg_repo_key_copy1.diff.after.state != 'file'
+    changed_when: reg_repo_key_copy1.state != 'file'
 
   - name: "Dotfiles main || Copy git repo key from vault variable (root)"
     copy:
-      content: "{{ dotf_git_repo.key_vault }}"
+      content: "{{ dotf_git_repo.key_vault }}\n"
       dest: "/root/.ssh/.ansible_dotfiles_key"
       mode: 0400
       owner: "root"
@@ -61,7 +61,7 @@
     no_log: true
     ignore_errors: "{{ ansible_check_mode }}"
     register: reg_repo_key_copy2
-    changed_when: dotf_root_too and reg_repo_key_copy2.diff.after.state != 'file'
+    changed_when: dotf_root_too and reg_repo_key_copy2.state != 'file'
     when: dotf_root_too
     become: true
 
