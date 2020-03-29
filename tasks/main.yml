@@ -47,6 +47,7 @@
       owner: "{{ ansible_env.USER }}"
       group: "{{ ansible_env.USER }}"
     no_log: true
+    ignore_errors: "{{ ansible_check_mode }}"
     register: reg_repo_key_copy1
     changed_when: reg_repo_key_copy1.state != 'file'
 
@@ -58,6 +59,7 @@
       owner: "root"
       group: "root"
     no_log: true
+    ignore_errors: "{{ ansible_check_mode }}"
     register: reg_repo_key_copy2
     changed_when: reg_repo_key_copy2.state != 'file'
     when: dotf_root_too
@@ -102,6 +104,7 @@
     file:
       path: "{{ dotf_git_repo.key }}"
       state: "absent"
+    ignore_errors: "{{ ansible_check_mode }}"
     register: reg_repo_key_clean1
     changed_when: reg_repo_key_clean1.state != 'absent'
 
@@ -109,6 +112,7 @@
     file:
       path: "/root/.ssh/.ansible_dotfiles_key"
       state: "absent"
+    ignore_errors: "{{ ansible_check_mode }}"
     register: reg_repo_key_clean2
     changed_when: reg_repo_key_clean2.state != 'absent'
     when: dotf_root_too
