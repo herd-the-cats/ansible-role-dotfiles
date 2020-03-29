@@ -19,7 +19,7 @@
       msg: >
         This role is intended to be run as a regular user, with the var dotf_root_too setting up
         root's dotfiles using become. To run this as root, please set dotf_root_too to false.
-    when: ansible_env.UID == 0 and dotf_root_too
+    when: lookup('pipe','id -u') == 0 and dotf_root_too
 
   - name: "Dotfiles main || Make sure .ssh directory exists"
     file:
