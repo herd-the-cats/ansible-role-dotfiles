@@ -41,7 +41,7 @@
 
   - name: "Dotfiles main || Copy git repo key from vault variable"
     copy:
-      content: "{{ dotf_git_repo.key_vault }}"
+      content: "{{ dotf_git_repo.key_vault }}\n"
       dest: "{{ dotf_git_repo.key }}"
       mode: 0400
       owner: "{{ ansible_env.USER }}"
@@ -49,7 +49,7 @@
     no_log: true
     ignore_errors: "{{ ansible_check_mode }}"
     register: reg_repo_key_copy1
-    changed_when: reg_repo_key_copy1.state != 'file'
+    changed_when: reg_repo_key_copy1.diff.after.state != 'file'
 
   - name: "Dotfiles main || Copy git repo key from vault variable (root)"
     copy:
@@ -61,7 +61,7 @@
     no_log: true
     ignore_errors: "{{ ansible_check_mode }}"
     register: reg_repo_key_copy2
-    changed_when: reg_repo_key_copy2.state != 'file'
+    changed_when: dotf_root_too and reg_repo_key_copy2.diff.after.state != 'file'
     when: dotf_root_too
     become: true
 
@@ -106,7 +106,7 @@
       state: "absent"
     ignore_errors: "{{ ansible_check_mode }}"
     register: reg_repo_key_clean1
-    changed_when: reg_repo_key_clean1.state != 'absent'
+    changed_when: reg_repo_key_clean1.diff.after.state != 'absent'
 
   - name: "Dotfiles main || Clean up the private key (root)"
     file:
@@ -114,11 +114,11 @@
       state: "absent"
     ignore_errors: "{{ ansible_check_mode }}"
     register: reg_repo_key_clean2
-    changed_when: reg_repo_key_clean2.state != 'absent'
+    changed_when: dotf_root_too and reg_repo_key_clean2.diff.after.state != 'absent'
     when: dotf_root_too
     become: true
 
-- name: "Dotfiles main || Create templated stow script"
+- name: "Dotfiles main || Create stow wrapper script"
   copy:
     src: "usr/bin/stow_wrapper.sh"
     dest: "/usr/bin/stow_wrapper.sh"
@@ -127,7 +127,7 @@
     mode: 0755
   become: true
 
-- name: "Dotfiles main || Run stow script on selected repo directories"
+- name: "Dotfiles main || Run stow wrapper script on selected repo directories"
   command:
     argv:
     - "/usr/bin/stow_wrapper.sh"
