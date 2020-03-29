@@ -35,7 +35,7 @@ for file in "${files[@]}" ; do
 # Make old scripts non-executable
     chmod -x "${target_dir%/}/${dest}"
   fi
-  if [[ ! -d "${target_dir%/}/${file%/*}" ]] ; then
+  if [[ "${target_dir%/}/${file%/*}" != "${target_dir%/}/${file}" && ! -d "${target_dir%/}/${file%/*}" ]] ; then
 # Create any missing parent directories before symlinking
     mkdir -p "${target_dir%/}/${file%/*}" || \
       { printf "Error creating parent directory %s.\n" "${target_dir%/}/${file%/*}" ; exit 1 ; }
