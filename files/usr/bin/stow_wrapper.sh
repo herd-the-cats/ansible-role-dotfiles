@@ -30,9 +30,15 @@ for file in "${files[@]}" ; do
     else
       dest=".old_ansible_${file}$(date -I)"
     fi
-    mv -v "${target_dir%/}/${file}" "${target_dir%/}/${dest}"
+    mv -v "${target_dir%/}/${file}" "${target_dir%/}/${dest}" || \
+      { printf "Error backing up %s.\n" "${target_dir%/}/${file}" ; exit 1 ; }
 # Make old scripts non-executable
     chmod -x "${target_dir%/}/${dest}"
+  fi
+  if [[ ! -d "${target_dir%/}/${file%/*}" ]] ; then
+# Create any missing parent directories before symlinking
+    mkdir -p "${target_dir%/}/${file%/*}" || \
+      { printf "Error creating parent directory %s.\n" "${target_dir%/}/${file%/*}" ; exit 1 ; }
   fi
 done
 
