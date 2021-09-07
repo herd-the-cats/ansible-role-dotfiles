@@ -1,7 +1,7 @@
 Role Name
 =========
 
-This role uses a wrapper around GNU stow to back up any existing dotfiles and then symlink the desired folders from the dotfiles repo.
+This role uses a wrapper around GNU stow to back up any existing dotfiles and then symlink the desired folders from the dotfiles repo. It can run as a single unprivileged user, or set up multiple user accounts.
 
 Requirements
 ------------
@@ -37,7 +37,9 @@ dotfiles
 Role Variables
 --------------
 
-This role requires setting a valid git repo URL and vaulted key_vault attribute in the dotf_git_repo dict, as well as the desired folders to stow. The dotf_root_too boolean will also stow the selected folders for root using become.
+This role requires setting a valid git repo URL and vaulted key_vault attribute in the dotf_git_repo_default dict,  
+as well as the desired folders to stow in stow_folder_list. If dotf_multi_user is true then any users listed in  
+dotf_git_repo_users will be set up, optionally with individual repo, key, folder, etc. settings.
 
 License
 -------
