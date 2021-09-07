@@ -1,18 +1,27 @@
 ---
 # defaults file for dotfiles
 
-dotf_packages:
-- stow
+dotf_multi_user: false
 
-dotf_git_repo:
-#  path: "{{ ansible_env.HOME }}/.dotfiles"
+dotf_git_key_path: "/.ssh/.ansible_dotfiles_key"
+
+dotf_git_path: "/.dotfiles"
+
+# For single dotfiles repo shared between user accounts. Key_keep leaves a permanent copy of repo private key for users.
+dotf_git_repo_default:
   url: ""
   version: "master"
-#  key: "{{ ansible_env.HOME }}/.ssh/.ansible_dotfiles_key"
 # Vault me
   key_vault: ""
+  key_keep: false
+  stow_folder_list: []
 
-# List of folders in dotfiles repo to pass to stow script
-dotf_stow_list: []
-
-dotf_root_too: true
+# For multi user. Can specify individual repos, keys, versions, and repo folders to link.
+dotf_git_repo_users:
+- user: "root"
+#  url: ""
+#  version: "master"
+## Vault me
+#  key_vault: ""
+#  key_keep: true
+#  stow_folder_list: []

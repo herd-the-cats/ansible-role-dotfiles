@@ -1,171 +1,34 @@
 ---
 # tasks file for dotfiles
-
-- name: "Dotfiles main || Install required packages"
-  package:
-    name: "{{ dotf_packages }}"
-    state: "present"
-  become: true
-  become_user: "root"
+- name: "Dotfiles main || Get package facts"
+  package_facts:
 
 - name: "Dotfiles main || Check running user (compatibility with become_user)"
   shell: 'if [[ -n $USER ]] ; then echo $USER ; else { echo "USER env variable is empty! Bailing out." ; exit 1 ; } ; fi'
   changed_when: false
-  register: reg_dotf_cur_user
+  register: r_dotf_cur_user
 
-- name: "Dotfiles main || Get passwd info on running user."
+- name: "Dotfiles main || Get passwd info on running users"
   getent:
     database: "passwd"
   changed_when: false
 
-- name: "Dotfiles main || Set facts with current user/home"
-  set_fact:
-    dotf_user: "{{ reg_dotf_cur_user.stdout }}"
-    dotf_userhome: "{{ getent_passwd[reg_dotf_cur_user.stdout][4] }}"
-
-- name: "Dotfiles main || Block for cloning dotfiles repo."
-  block:
-  - name: "Check for vault var presence"
-    fail:
-      msg: "The dotf_git_repo.key_vault var is undefined or empty."
-    when: dotf_git_repo.key_vault is undefined or dotf_git_repo.key_vault | string | length < 1
-
-  - name: "Dotfiles main || Check for root running role."
-    fail:
-      msg: >
-        This role is intended to be run as a regular user, with the var dotf_root_too setting up
-        root's dotfiles using become. To run this as root, please set dotf_root_too to false.
-    when: lookup('pipe','id -u') == 0 and dotf_root_too
-
-  - name: "Dotfiles main || Make sure .ssh directory exists"
-    file:
-      path: "{{ dotf_userhome }}/.ssh"
-      state: "directory"
-      owner: "{{ dotf_user }}"
-      group: "{{ dotf_user }}"
-      mode: 0700
-
-  - name: "Dotfiles main || Make sure .ssh directory exists (root)"
-    file:
-      path: "/root/.ssh"
-      state: "directory"
-      owner: "root"
-      group: "root"
-      mode: 0700
-    when: dotf_root_too
-    become: true
-    become_user: "root"
-
-  - name: "Dotfiles main || Copy git repo key from vault variable"
-    copy:
-      content: "{{ dotf_git_repo.key_vault }}\n"
-      dest: "{{ dotf_git_repo.key }}"
-      mode: 0400
-      owner: "{{ dotf_user }}"
-      group: "{{ dotf_user }}"
-    no_log: true
-    ignore_errors: "{{ ansible_check_mode }}"
-    register: reg_repo_key_copy1
-    changed_when: reg_repo_key_copy1.state != 'file'
-
-  - name: "Dotfiles main || Copy git repo key from vault variable (root)"
-    copy:
-      content: "{{ dotf_git_repo.key_vault }}\n"
-      dest: "/root/.ssh/.ansible_dotfiles_key"
-      mode: 0400
-      owner: "root"
-      group: "root"
-    no_log: true
-    ignore_errors: "{{ ansible_check_mode }}"
-    register: reg_repo_key_copy2
-    changed_when: dotf_root_too and reg_repo_key_copy2.state != 'file'
-    when: dotf_root_too
-    become: true
-    become_user: "root"
-
-  - name: "Dotfiles main || Clone dotfiles repo"
-    git:
-      repo: "{{ dotf_git_repo.url }}"
-      dest: "{{ dotf_userhome }}/.dotfiles"
-      version: "{{ dotf_git_repo.version }}"
-      key_file: "{{ dotf_userhome }}/.ssh/.ansible_dotfiles_key"
-      update: true
-      accept_hostkey: true
-      force: true
-# Environment must be set due to Ansible issue #33947, 20190808 version 2.8
-    environment:
-      TMPDIR: "{{ dotf_userhome }}/.ansible/tmp"
-    when:
-    - dotf_git_repo is defined
-    - dotf_git_repo.url | string | length > 0
-
-  - name: "Dotfiles main || Clone dotfiles repo (root)"
-    git:
-      repo: "{{ dotf_git_repo.url }}"
-      dest: "/root/.dotfiles"
-      version: "{{ dotf_git_repo.version }}"
-      key_file: "/root/.ssh/.ansible_dotfiles_key"
-      update: true
-      accept_hostkey: true
-      force: true
-# Environment must be set due to Ansible issue #33947, 20190808 version 2.8
-    environment:
-      TMPDIR: "/root/.ansible/tmp"
-    when:
-    - dotf_git_repo is defined
-    become: true
-    become_user: "root"
-
-  always:
-  - name: "Dotfiles main || Clean up the private key"
-    file:
-      path: "{{ dotf_git_repo.key }}"
-      state: "absent"
-    ignore_errors: "{{ ansible_check_mode }}"
-    register: reg_repo_key_clean1
-    changed_when: reg_repo_key_clean1.diff.after.state != 'absent'
-
-  - name: "Dotfiles main || Clean up the private key (root)"
-    file:
-      path: "/root/.ssh/.ansible_dotfiles_key"
-      state: "absent"
-    ignore_errors: "{{ ansible_check_mode }}"
-    register: reg_repo_key_clean2
-    changed_when: dotf_root_too and reg_repo_key_clean2.diff.after.state != 'absent'
-    when: dotf_root_too
-    become: true
-    become_user: "root"
-
-- name: "Dotfiles main || Create stow wrapper script"
-  copy:
-    src: "usr/bin/stow_wrapper.sh"
-    dest: "/usr/bin/stow_wrapper.sh"
-    owner: "root"
-    group: "root"
-    mode: 0755
-  become: true
-  become_user: "root"
-
-- name: "Dotfiles main || Run stow wrapper script on selected repo directories"
-  command:
-    argv:
-    - "/usr/bin/stow_wrapper.sh"
-    - "{{ dotf_userhome ~ '/.dotfiles' | quote }}"
-    - "{{ dotf_userhome | quote }}"
-    - "{{ item | quote }}"
-  loop: "{{ dotf_stow_list }}"
-  register: reg_stow_result1
-
-- name: "Dotfiles main || Run stow script on selected repo directories (root)"
-  command:
-    argv:
-    - "/usr/bin/stow_wrapper.sh"
-    - "/root/.dotfiles"
-    - "/root"
-    - "{{ item | quote }}"
-  loop: "{{ dotf_stow_list }}"
-  register: reg_stow_result2
-  become: true
-  become_user: "root"
+- name: "Dotfiles main || Include single user tasks for current user"
+  include_tasks: "single_user_dotfiles.yml"
+  vars:
+    dotf_user: "{{ r_dotf_cur_user['stdout'] }}"
+    dotf_userhome: "{{ getent_passwd[r_dotf_cur_user.stdout][4] }}"
   when:
-  - dotf_root_too
+  - not dotf_multi_user | bool
+
+- name: "Dotfiles main || Include multi user tasks."
+  include_tasks: "multi_user_dotfiles.yml"
+  vars:
+    dotf_iter: "{{ item }}"
+    dotf_user: "{{ item['user'] }}"
+    dotf_userhome: "{{ getent_passwd[item.user][4] }}"
+  when:
+  - dotf_multi_user | bool
+  loop: >
+        {{ (r_dotf_cur_user['stdout'] in dotf_git_repo_users | map(attribute='user') | list) |
+         ternary(dotf_git_repo_users, dotf_git_repo_users + [{"user": r_dotf_cur_user['stdout']}]) }}
