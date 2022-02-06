@@ -104,6 +104,6 @@
   loop_control:
     loop_var: "stow_folder"
   register: r_stow_results
-  changed_when: r_stow_results['stderr_lines'] | reject('match', 'UNLINK') | reject('search', 'reverts previous action') | length > 0
+  changed_when: r_stow_results['stderr_lines'] | reject('match', 'UNLINK') | reject('search', 'reverts previous action') | list | length > 0
   become: true
   become_user: "root"
