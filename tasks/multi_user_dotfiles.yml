@@ -52,7 +52,8 @@
     - dotf_git_repo_default is defined
     - dotf_git_repo_default['url'] | string | length > 0
     become: true
-    become_user: "root"
+    become_user: "{{ dotf_user }}"
+#Switching the become_user is necessary due to newer git security. Avoids having to set safe.directory.
 
 # The git module doesn't have an owner option, seems to end up root owned no matter which become_user is set.
   - name: "Dotfiles multi user || Set file ownership of git repo"
